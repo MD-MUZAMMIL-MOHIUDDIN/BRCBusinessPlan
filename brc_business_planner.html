@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BRC Business Planning Tool</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface2: #1c2333;
+  --border: #30363d;
+  --green: #3fb950;
+  --green-dim: #1a4a25;
+  --amber: #d29922;
+  --amber-dim: #3d2c00;
+  --blue: #58a6ff;
+  --blue-dim: #0d2340;
+  --red: #f85149;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --text-dim: #484f58;
+  --accent: #7ee787;
+  --radius: 8px;
+  --font-head: 'Syne', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--font-body); min-height: 100vh; }
+
+/* Layout */
+.app { display: flex; height: 100vh; overflow: hidden; }
+.sidebar { width: 240px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto; }
+.main { flex: 1; overflow-y: auto; }
+
+/* Sidebar */
+.sidebar-header { padding: 20px 16px 16px; border-bottom: 1px solid var(--border); }
+.sidebar-logo { font-family: var(--font-head); font-size: 16px; font-weight: 800; color: var(--accent); letter-spacing: -0.5px; }
+.sidebar-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.nav { padding: 8px 0; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 16px; cursor: pointer; font-size: 13px; color: var(--text-muted); border-left: 3px solid transparent; transition: all 0.15s; }
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: var(--surface2); color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+.nav-icon { width: 16px; height: 16px; flex-shrink: 0; }
+.nav-section { padding: 12px 16px 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); }
+
+/* Pages */
+.page { display: none; padding: 24px 28px; max-width: 1200px; }
+.page.active { display: block; }
+
+/* Headers */
+.page-header { margin-bottom: 24px; }
+.page-title { font-family: var(--font-head); font-size: 22px; font-weight: 700; color: var(--text); }
+.page-desc { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+/* Cards */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+.card-title { font-family: var(--font-head); font-size: 14px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.badge { font-size: 10px; padding: 2px 7px; border-radius: 20px; font-weight: 600; }
+.badge-green { background: var(--green-dim); color: var(--green); }
+.badge-blue { background: var(--blue-dim); color: var(--blue); }
+.badge-amber { background: var(--amber-dim); color: var(--amber); }
+
+/* Forms */
+.form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.form-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+.form-group input, .form-group select, .form-group textarea {
+  background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 11px;
+  border-radius: 6px; font-family: var(--font-body); font-size: 13px; outline: none; transition: border-color 0.15s;
+}
+.form-group input:focus, .form-group select:focus { border-color: var(--blue); }
+.form-group select option { background: var(--surface2); }
+.form-group input[readonly] { color: var(--text-muted); cursor: default; }
+.form-group input.calculated { color: var(--green); background: var(--green-dim); border-color: var(--green-dim); }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; gap: 7px; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; font-family: var(--font-body); }
+.btn-primary { background: var(--green); color: #0d1117; }
+.btn-primary:hover { background: #45c55a; }
+.btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--border); }
+.btn-danger { background: transparent; color: var(--red); border: 1px solid var(--red); }
+.btn-danger:hover { background: rgba(248,81,73,0.1); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn-row { display: flex; gap: 8px; align-items: center; margin-top: 16px; flex-wrap: wrap; }
+
+/* Tables */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+thead tr { background: var(--surface2); }
+th { padding: 9px 12px; text-align: left; font-weight: 700; color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: rgba(255,255,255,0.02); }
+td.number { color: var(--blue); font-variant-numeric: tabular-nums; }
+td.calc { color: var(--green); font-variant-numeric: tabular-nums; }
+td.header-row { font-weight: 700; background: var(--surface2); color: var(--text); }
+td.total-row { font-weight: 700; color: var(--amber); background: var(--amber-dim); }
+
+/* Summary stats */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+.stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+.stat-value { font-family: var(--font-head); font-size: 20px; font-weight: 700; }
+.stat-value.green { color: var(--green); }
+.stat-value.blue { color: var(--blue); }
+.stat-value.amber { color: var(--amber); }
+
+/* Alerts */
+.alert { padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 12px; }
+.alert-info { background: var(--blue-dim); border: 1px solid rgba(88,166,255,0.3); color: var(--blue); }
+.alert-success { background: var(--green-dim); border: 1px solid rgba(63,185,80,0.3); color: var(--green); }
+.alert-warn { background: var(--amber-dim); border: 1px solid rgba(210,153,34,0.3); color: var(--amber); }
+
+/* Demand mapping table inline editing */
+td input, td select {
+  background: transparent; border: 1px solid transparent; color: var(--text); padding: 3px 6px;
+  border-radius: 4px; font-size: 12px; width: 100%; min-width: 80px; font-family: var(--font-body);
+}
+td input:focus, td select:focus { background: var(--bg); border-color: var(--blue); outline: none; }
+td select option { background: var(--surface2); }
+td.act { white-space: nowrap; }
+.del-btn { background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 3px 5px; border-radius: 4px; transition: color 0.15s; }
+.del-btn:hover { color: var(--red); }
+
+/* Tabs */
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+.tab { padding: 8px 14px; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--text-muted); border-bottom: 2px solid transparent; transition: all 0.15s; }
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Product costing accordion */
+.concoction-block { border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; overflow: hidden; }
+.concoction-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--surface2); cursor: pointer; }
+.concoction-header:hover { background: var(--border); }
+.concoction-name { font-weight: 700; font-size: 14px; }
+.concoction-meta { font-size: 12px; color: var(--text-muted); display: flex; gap: 16px; }
+.concoction-body { padding: 16px; display: none; }
+.concoction-body.open { display: block; }
+.expand-icon { font-size: 10px; color: var(--text-muted); }
+
+/* Summary section */
+.summary-section { margin-bottom: 24px; }
+.section-title { font-family: var(--font-head); font-size: 16px; font-weight: 700; color: var(--accent); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.section-title::before { content: ''; width: 4px; height: 18px; background: var(--accent); border-radius: 2px; }
+.pl-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.pl-row:last-child { border-bottom: none; }
+.pl-row .label { color: var(--text-muted); }
+.pl-row .value { font-weight: 600; font-variant-numeric: tabular-nums; }
+.pl-row.total { font-weight: 700; font-size: 14px; background: var(--surface2); margin: 4px -16px; padding: 8px 16px; }
+.pl-row.total .value.green { color: var(--green); }
+.pl-row.total .value.red { color: var(--red); }
+.pl-row.total .value.amber { color: var(--amber); }
+
+/* Save indicator */
+.save-indicator { position: fixed; top: 12px; right: 12px; background: var(--green-dim); border: 1px solid var(--green); color: var(--green); padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; }
+.save-indicator.show { opacity: 1; }
+
+/* Scrollbars */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+@media (max-width: 768px) {
+  .sidebar { width: 200px; }
+  .form-grid-3 { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">🌾 BRC Planner</div>
+      <div class="sidebar-sub">Business Planning Tool</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section">Setup</div>
+      <div class="nav-item active" onclick="showPage('brc-details')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0a8 8 0 100 16A8 8 0 008 0zm0 14.5a6.5 6.5 0 110-13 6.5 6.5 0 010 13zm0-11a1 1 0 011 1v3.5h2a1 1 0 010 2H7.5a1 1 0 01-1-1V4.5a1 1 0 011-1z"/></svg>
+        BRC Details
+      </div>
+      <div class="nav-section">Data Entry</div>
+      <div class="nav-item" onclick="showPage('demand-mapping')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2h14v1H1V2zm0 3h14v1H1V5zm0 3h14v1H1V8zm0 3h8v1H1v-1z"/></svg>
+        Demand Mapping
+      </div>
+      <div class="nav-item" onclick="showPage('product-costing')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 1.5a5.5 5.5 0 110 11 5.5 5.5 0 010-11zm.5 2.5H7v4l3.25 2-.75-1.23-2.5-1.52V5z"/></svg>
+        Product Costing
+      </div>
+      <div class="nav-section">Reports</div>
+      <div class="nav-item" onclick="showPage('demand-projection')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M0 11l4-4 4 3 4-7 4 2V16H0v-5z"/></svg>
+        Demand Projection
+      </div>
+      <div class="nav-item" onclick="showPage('capital-cost')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm.5 10.5h-1v-5h1v5zm0-6.5h-1V4h1v1z"/></svg>
+        Capital Cost
+      </div>
+      <div class="nav-item" onclick="showPage('max-demand')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h4v12H2V2zm4.5 4h4v8H6.5V6zm4.5-2h4v10h-4V4z"/></svg>
+        Max. Demand
+      </div>
+      <div class="nav-item" onclick="showPage('pl-payback')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M3 3h2l3 9 3-9h2l-4 12H7L3 3zm4 0h2v4H7V3z"/></svg>
+        P&L & Payback
+      </div>
+    </nav>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main">
+
+    <!-- BRC Details -->
+    <div id="page-brc-details" class="page active">
+      <div class="page-header">
+        <div class="page-title">BRC Details & Landscape</div>
+        <div class="page-desc">Enter basic information about the BRC and its catchment landscape.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">BRC Information <span class="badge badge-blue">Required</span></div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>BRC Name</label>
+            <input type="text" id="brc-name" placeholder="Name of BRC" oninput="autoSave()">
+          </div>
+          <div class="form-group">
+            <label>BRC Entity</label>
+            <input type="text" id="brc-entity" placeholder="Entity name" oninput="autoSave()">
+          </div>
+          <div class="form-group">
+            <label>Location</label>
+            <input type="text" id="brc-location" placeholder="Village/Town" oninput="autoSave()">
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Landscape Details</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>GPs (Gram Panchayats)</label>
+            <input type="text" id="landscape-gps" placeholder="List of GPs" oninput="autoSave()">
+          </div>
+          <div class="form-group">
+            <label>Mandal</label>
+            <input type="text" id="landscape-mandal" placeholder="Mandal" oninput="autoSave()">
+          </div>
+          <div class="form-group">
+            <label>District</label>
+            <input type="text" id="landscape-dist" placeholder="District" oninput="autoSave()">
+          </div>
+          <div class="form-group">
+            <label>Total Catchment Area (acres)</label>
+            <input type="number" id="catchment-area" placeholder="1000" oninput="autoSave()">
+          </div>
+          <div class="form-group">
+            <label>No. of GPs Served</label>
+            <input type="number" id="no-gps" placeholder="0" oninput="autoSave()">
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="saveBRCDetails()">💾 Save Details</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Demand Mapping -->
+    <div id="page-demand-mapping" class="page">
+      <div class="page-header">
+        <div class="page-title">Demand Mapping</div>
+        <div class="page-desc">Add crop-wise demand entries for each land type, season, and concoction requirement.</div>
+      </div>
+      <div class="alert alert-info">📋 Add rows using the form below. Duration (months) = Duration (days) ÷ 30. Total Requirement = Acres × Dosage × Applications.</div>
+      <div class="card">
+        <div class="card-title">Add New Entry</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Land Type *</label>
+            <select id="dm-landtype"><option value="">Select...</option></select>
+          </div>
+          <div class="form-group">
+            <label>Soil Type *</label>
+            <select id="dm-soiltype"><option value="">Select...</option></select>
+          </div>
+          <div class="form-group">
+            <label>Season *</label>
+            <select id="dm-season"><option value="">Select...</option></select>
+          </div>
+          <div class="form-group">
+            <label>Crop Name *</label>
+            <select id="dm-cropname"><option value="">Select...</option></select>
+          </div>
+          <div class="form-group">
+            <label>Sowing Month</label>
+            <select id="dm-sowingmonth"><option value="">Select...</option></select>
+          </div>
+          <div class="form-group">
+            <label>Duration (days)</label>
+            <input type="number" id="dm-duration" placeholder="90" oninput="calcDMDuration()">
+          </div>
+          <div class="form-group">
+            <label>Duration (months)</label>
+            <input type="number" id="dm-duration-months" class="calculated" readonly>
+          </div>
+          <div class="form-group">
+            <label>Total Acres Under Cultivation</label>
+            <input type="number" id="dm-acres" placeholder="100" oninput="calcDMTotals()">
+          </div>
+          <div class="form-group">
+            <label>No. of Farmers</label>
+            <input type="number" id="dm-farmers" placeholder="100">
+          </div>
+          <div class="form-group">
+            <label>Purpose / Benefit *</label>
+            <select id="dm-purpose"><option value="">Select...</option></select>
+          </div>
+          <div class="form-group">
+            <label>Concoction Name *</label>
+            <select id="dm-concoction"><option value="">Select...</option></select>
+          </div>
+          <div class="form-group">
+            <label>Application Type</label>
+            <select id="dm-apptype"><option value="">Select...</option></select>
+          </div>
+          <div class="form-group">
+            <label>Dosage - Concentrate (ltr-kg/acre)</label>
+            <input type="number" id="dm-dosage" placeholder="30" step="0.1" oninput="calcDMTotals()">
+          </div>
+          <div class="form-group">
+            <label>No. of Applications / Season</label>
+            <input type="number" id="dm-applications" placeholder="3" oninput="calcDMTotals()">
+          </div>
+        </div>
+        <div class="alert alert-info" style="margin-top:12px">Year-wise Acres Coverage (max = total acres above)</div>
+        <div class="form-grid-3" style="margin-top:8px">
+          <div class="form-group">
+            <label>Acres Coverage Year 1</label>
+            <input type="number" id="dm-y1acres" placeholder="0" oninput="calcDMTotals()">
+          </div>
+          <div class="form-group">
+            <label>Acres Coverage Year 2</label>
+            <input type="number" id="dm-y2acres" placeholder="0" oninput="calcDMTotals()">
+          </div>
+          <div class="form-group">
+            <label>Acres Coverage Year 3</label>
+            <input type="number" id="dm-y3acres" placeholder="0" oninput="calcDMTotals()">
+          </div>
+        </div>
+        <div class="form-grid-3" style="margin-top:8px">
+          <div class="form-group">
+            <label>Max Total Requirement (ltrs) – auto</label>
+            <input id="dm-max-req" class="calculated" readonly>
+          </div>
+          <div class="form-group">
+            <label>Total Req Y1 (ltrs) – auto</label>
+            <input id="dm-y1req" class="calculated" readonly>
+          </div>
+          <div class="form-group">
+            <label>Total Req Y2 (ltrs) – auto</label>
+            <input id="dm-y2req" class="calculated" readonly>
+          </div>
+          <div class="form-group">
+            <label>Total Req Y3 (ltrs) – auto</label>
+            <input id="dm-y3req" class="calculated" readonly>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="addDemandEntry()">+ Add Entry</button>
+          <button class="btn btn-secondary" onclick="clearDMForm()">Clear</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Demand Mapping Entries <span class="badge badge-green" id="dm-count-badge">0 entries</span></div>
+        <div class="table-wrap">
+          <table id="dm-table">
+            <thead>
+              <tr>
+                <th>Land Type</th>
+                <th>Soil</th>
+                <th>Season</th>
+                <th>Crop</th>
+                <th>Month</th>
+                <th>Dur(d)</th>
+                <th>Acres</th>
+                <th>Purpose</th>
+                <th>Concoction</th>
+                <th>App Type</th>
+                <th>Dosage</th>
+                <th>Apps</th>
+                <th>Max Req</th>
+                <th>Y1 Acres</th>
+                <th>Y1 Req</th>
+                <th>Y2 Acres</th>
+                <th>Y2 Req</th>
+                <th>Y3 Acres</th>
+                <th>Y3 Req</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="dm-tbody"></tbody>
+          </table>
+        </div>
+        <div id="dm-empty" class="alert alert-warn" style="margin-top:12px">No entries yet. Use the form above to add demand mapping data.</div>
+      </div>
+    </div>
+
+    <!-- Product Costing -->
+    <div id="page-product-costing" class="page">
+      <div class="page-header">
+        <div class="page-title">Product Costing</div>
+        <div class="page-desc">Configure ingredients, batch sizes, and calculate cost per unit for each concoction.</div>
+      </div>
+      <div class="alert alert-info">💡 Unit rates are auto-filled from DV Lists. You can override them. Material cost = Qty × Rate. Cost/unit = (Material + Labour cost) / (Filtrate% × Batch size).</div>
+      <div class="card">
+        <div class="card-title">Add / Edit Concoction Costing</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Concoction Name *</label>
+            <select id="pc-concoction"><option value="">Select concoction...</option></select>
+          </div>
+          <div class="form-group">
+            <label>Batch Size (ltrs/kg)</label>
+            <input type="number" id="pc-batch" placeholder="1000">
+          </div>
+          <div class="form-group">
+            <label>Prep Time (days)</label>
+            <input type="number" id="pc-preptime" placeholder="7">
+          </div>
+          <div class="form-group">
+            <label>Shelf Life (days)</label>
+            <input type="number" id="pc-shelflife" placeholder="30">
+          </div>
+          <div class="form-group">
+            <label>Labour Hours / Batch</label>
+            <input type="number" id="pc-labourhrs" placeholder="8">
+          </div>
+          <div class="form-group">
+            <label>Wage / Hour (Rs)</label>
+            <input type="number" id="pc-wage" placeholder="50" value="50">
+          </div>
+          <div class="form-group">
+            <label>% Filtrate / Saleable Product</label>
+            <input type="number" id="pc-filtrate" placeholder="0.9" step="0.01" max="1">
+          </div>
+          <div class="form-group">
+            <label>Sales Price / Unit (Rs)</label>
+            <input type="number" id="pc-salesprice" placeholder="0">
+          </div>
+        </div>
+        <div style="margin-top:14px; font-weight:700; font-size:13px; color:var(--text-muted); margin-bottom:8px">Ingredients</div>
+        <div id="pc-ingredients-container"></div>
+        <div class="btn-row">
+          <button class="btn btn-secondary btn-sm" onclick="addIngredientRow()">+ Add Ingredient</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="saveConcoctionCosting()">💾 Save Concoction</button>
+          <button class="btn btn-secondary" onclick="clearPCForm()">Clear</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Saved Concoction Costings <span class="badge badge-green" id="pc-count-badge">0</span></div>
+        <div id="pc-list"></div>
+        <div id="pc-empty" class="alert alert-warn">No costing data saved yet. Fill the form above to add concoctions.</div>
+      </div>
+    </div>
+
+    <!-- Demand Projection -->
+    <div id="page-demand-projection" class="page">
+      <div class="page-header">
+        <div class="page-title">Demand Projection</div>
+        <div class="page-desc">Concoction-wise demand projection summary across all crops for each year, by season.</div>
+      </div>
+      <div id="dp-content"></div>
+    </div>
+
+    <!-- Capital Cost -->
+    <div id="page-capital-cost" class="page">
+      <div class="page-header">
+        <div class="page-title">Capital Cost</div>
+        <div class="page-desc">Infrastructure and equipment capital cost estimation based on urine requirement projections.</div>
+      </div>
+      <div id="cc-content"></div>
+    </div>
+
+    <!-- Max Demand -->
+    <div id="page-max-demand" class="page">
+      <div class="page-header">
+        <div class="page-title">Maximum Demand</div>
+        <div class="page-desc">Maximum demand in the landscape at full saturation (100% acres coverage).</div>
+      </div>
+      <div id="md-content"></div>
+    </div>
+
+    <!-- P&L & Payback -->
+    <div id="page-pl-payback" class="page">
+      <div class="page-header">
+        <div class="page-title">Profit & Loss & Payback</div>
+        <div class="page-desc">Annual P&L statement and payback period calculation for Year 1.</div>
+      </div>
+      <div id="pl-content"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="save-indicator" id="save-indicator">✓ Saved</div>
+
+<script>
+// ===== STATE =====
+let dvLists = {};
+let appData = {
+  brcDetails: {name:'', entity:'', location:''},
+  landscapeDetails: {gps:'', mandal:'', dist:''},
+  totalCatchmentArea: 1000,
+  noOfGPs: 0,
+  demandMapping: [],
+  productCosting: [],
+  capitalCost: {
+    urineLitresPerDayPerCattle: 1.5,
+    avgAreaPerCattle: 5,
+    avgDepthConcrete: 0.15,
+    avgRateLining: 2500,
+    items: [
+      {sno:1, description:'BRC Controller unit controller box with pump, batteries, solar panel, mesh frame & air stones', uom:'set', qty:1, unitRate:40320, source:'Capital subsidy', usefulLife:10},
+      {sno:2, description:'Elevated platform for fermentation tank, filterate tank', uom:'no', qty:1, unitRate:7500, source:'Capital subsidy', usefulLife:10},
+      {sno:3, description:'Mounting frames for solar panel, DJ controller unit, ladder', uom:'set', qty:1, unitRate:3000, source:'Capital subsidy', usefulLife:10},
+      {sno:4, description:'Tanks - fermentation (1000 ltr), Filterate tank (500 ltr)', uom:'set', qty:1, unitRate:12000, source:'Capital subsidy', usefulLife:10},
+      {sno:5, description:'Plumbing items', uom:'set', qty:1, unitRate:5000, source:'Capital subsidy', usefulLife:10},
+      {sno:6, description:'Shelter', uom:'no', qty:1, unitRate:2500, source:'Capital subsidy', usefulLife:10},
+      {sno:7, description:'Water storage tank for supply to fermenter tank (1000 ltr)', uom:'no', qty:1, unitRate:7000, source:'Capital subsidy', usefulLife:10}
+    ],
+    urineSystem: {pipelineNetworkCost:20000, sumpQty:1, sumpUnitRate:7500},
+    othersWorks: 4000,
+    transportation: 4000,
+    equipment: [
+      {description:'Plastic Drums 100 lt with lid (production)', uom:'no', qty:10, unitRate:600, usefulLife:3},
+      {description:'Gas Stove/Connection', uom:'no', qty:1, unitRate:7000, usefulLife:5},
+      {description:'Buckets n tubs', uom:'no', qty:5, unitRate:160, usefulLife:3},
+      {description:'Steel vessels big', uom:'no', qty:3, unitRate:800, usefulLife:5},
+      {description:'Wet grinder', uom:'no', qty:1, unitRate:9000, usefulLife:5},
+      {description:'Racks', uom:'no', qty:1, unitRate:2500, usefulLife:10},
+      {description:'Pressure cooker (20 lt)', uom:'no', qty:1, unitRate:5000, usefulLife:5}
+    ]
+  },
+  plSettings: {salesDistExpenses:3000, wastagePercent:0.15, pheromoneTrapsQty:200, yellowPlatesQty:2000, cowUrineSalePrice:3}
+};
+
+// ===== DV LISTS =====
+dvLists = {
+  landTypes: ['Upland','Upper-mid land','Mid-land','Lowland','River bed','Homestead land'],
+  soilTypes: ['Sandy','Red','Laterite','Black cotton','Clay','Mixed','Red sandy loam','Alluvial'],
+  seasons: ['Kharif','Rabi','Summer','Perennial'],
+  cropNames: ['Red gram','Black gram','Green gram','Paddy','Groundnut','Turmeric','Minor millets','Sorghum','Pearl millet','Finger millet','Maize','Cotton','Mixed vegetables','Plantation-Oil palm','Orchard-Mango','Plantation-Cashew'],
+  sowingMonths: ['January','February','March','April','May','June','July','August','September','October','November','December'],
+  concoctions: ['Dravajeevamrutham','Ghanajeevamrutham T2','Beejamrutham','Panchagavya','Humic Acid','Neemastra','Fish amino acid','Panchpatri kashayam','Egg amino acid','Agniastra','Brahmastra','Sapthaginjala Kashaya','Sour buttermilk','Cow dung asafoetida solution','Pheromone traps','Yellow plates','Cow urine (surplus)'],
+  applicationTypes: ['Soil application','Fertigation','Foliar Spray','Seed coating','Not applicable','Others'],
+  purposes: ['Soil Fertility enhancement','Seed treatment','Plant Growth management','Enhancing nutrient uptake','Pest and disease prevention/cure'],
+  ingredients: ['Cow urine','Cow dung','Jaggery','Pulse flour','Chemical free soil','Water','Cow Ghee','Cow milk','Cow curd','Tender coconut water/toddy','Well-ripened banana','Leaves (neem, sitaphal, pongamia, dhatura, castor, jiledu etc)','Bacterial culture','Potassium hydroxide','Green chilli paste','Garlic paste','Tobacco','Lime powder','Fish waste','Eggs','Lemon','Jeevamrutham','Bengal gram','Green gram','Cowpea','Redgram','Sesame','Black gram','Wheat','Asafoetida'],
+  units: ['ltr','kg','no','ml'],
+  ingredientData: {
+    'Cow urine':{unit:'ltr',rate:5},'Cow dung':{unit:'kg',rate:2},'Jaggery':{unit:'kg',rate:60},'Pulse flour':{unit:'kg',rate:80},
+    'Chemical free soil':{unit:'kg',rate:0},'Cow Ghee':{unit:'ltr',rate:700},'Cow milk':{unit:'ltr',rate:60},'Cow curd':{unit:'ltr',rate:75},
+    'Tender coconut water/toddy':{unit:'ltr',rate:35},'Well-ripened banana':{unit:'no',rate:3},'Leaves (neem, sitaphal, pongamia, dhatura, castor, jiledu etc)':{unit:'kg',rate:5},
+    'Bacterial culture':{unit:'ml',rate:1},'Potassium hydroxide':{unit:'kg',rate:140},'Green chilli paste':{unit:'kg',rate:80},
+    'Garlic paste':{unit:'kg',rate:150},'Tobacco':{unit:'kg',rate:35},'Lime powder':{unit:'kg',rate:15},'Fish waste':{unit:'kg',rate:100},
+    'Eggs':{unit:'no',rate:10},'Lemon':{unit:'no',rate:3},'Water':{unit:'ltr',rate:0},'Jeevamrutham':{unit:'ltr',rate:3},
+    'Bengal gram':{unit:'kg',rate:180},'Green gram':{unit:'kg',rate:150},'Cowpea':{unit:'kg',rate:80},'Redgram':{unit:'kg',rate:150},
+    'Sesame':{unit:'kg',rate:300},'Black gram':{unit:'kg',rate:80},'Wheat':{unit:'kg',rate:30},'Asafoetida':{unit:'kg',rate:1600}
+  }
+};
+
+// ===== INIT =====
+function init() {
+  const saved = localStorage.getItem('brc_app_data');
+  if (saved) { try { appData = {...appData, ...JSON.parse(saved)}; } catch(e){} }
+  populateDropdowns();
+  loadBRCForm();
+  renderDMTable();
+  renderPCList();
+  populatePCConcoctionDropdown();
+}
+
+function populateDropdowns() {
+  const fills = [
+    ['dm-landtype', dvLists.landTypes],
+    ['dm-soiltype', dvLists.soilTypes],
+    ['dm-season', dvLists.seasons],
+    ['dm-cropname', dvLists.cropNames],
+    ['dm-sowingmonth', dvLists.sowingMonths],
+    ['dm-purpose', dvLists.purposes],
+    ['dm-concoction', dvLists.concoctions],
+    ['dm-apptype', dvLists.applicationTypes]
+  ];
+  fills.forEach(([id, opts]) => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    opts.forEach(o => { const opt = document.createElement('option'); opt.value = o; opt.textContent = o; el.appendChild(opt); });
+  });
+}
+
+function populatePCConcoctionDropdown() {
+  const sel = document.getElementById('pc-concoction');
+  sel.innerHTML = '<option value="">Select concoction...</option>';
+  dvLists.concoctions.forEach(c => { const o = document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
+}
+
+// ===== SAVE/LOAD =====
+let saveTimer;
+function autoSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => { saveData(); }, 500);
+}
+
+function saveData() {
+  localStorage.setItem('brc_app_data', JSON.stringify(appData));
+  const ind = document.getElementById('save-indicator');
+  ind.classList.add('show');
+  setTimeout(() => ind.classList.remove('show'), 1500);
+}
+
+// ===== BRC DETAILS =====
+function loadBRCForm() {
+  document.getElementById('brc-name').value = appData.brcDetails.name || '';
+  document.getElementById('brc-entity').value = appData.brcDetails.entity || '';
+  document.getElementById('brc-location').value = appData.brcDetails.location || '';
+  document.getElementById('landscape-gps').value = appData.landscapeDetails.gps || '';
+  document.getElementById('landscape-mandal').value = appData.landscapeDetails.mandal || '';
+  document.getElementById('landscape-dist').value = appData.landscapeDetails.dist || '';
+  document.getElementById('catchment-area').value = appData.totalCatchmentArea || 1000;
+  document.getElementById('no-gps').value = appData.noOfGPs || 0;
+}
+
+function saveBRCDetails() {
+  appData.brcDetails = {
+    name: document.getElementById('brc-name').value,
+    entity: document.getElementById('brc-entity').value,
+    location: document.getElementById('brc-location').value
+  };
+  appData.landscapeDetails = {
+    gps: document.getElementById('landscape-gps').value,
+    mandal: document.getElementById('landscape-mandal').value,
+    dist: document.getElementById('landscape-dist').value
+  };
+  appData.totalCatchmentArea = parseFloat(document.getElementById('catchment-area').value) || 1000;
+  appData.noOfGPs = parseInt(document.getElementById('no-gps').value) || 0;
+  saveData();
+  alert('BRC Details saved!');
+}
+
+// ===== DEMAND MAPPING =====
+function calcDMDuration() {
+  const d = parseFloat(document.getElementById('dm-duration').value) || 0;
+  document.getElementById('dm-duration-months').value = d > 0 ? (d/30).toFixed(2) : '';
+}
+
+function calcDMTotals() {
+  const acres = parseFloat(document.getElementById('dm-acres').value) || 0;
+  const dosage = parseFloat(document.getElementById('dm-dosage').value) || 0;
+  const apps = parseFloat(document.getElementById('dm-applications').value) || 0;
+  const y1 = parseFloat(document.getElementById('dm-y1acres').value) || 0;
+  const y2 = parseFloat(document.getElementById('dm-y2acres').value) || 0;
+  const y3 = parseFloat(document.getElementById('dm-y3acres').value) || 0;
+  document.getElementById('dm-max-req').value = acres * dosage * apps;
+  document.getElementById('dm-y1req').value = dosage * apps * y1;
+  document.getElementById('dm-y2req').value = dosage * apps * y2;
+  document.getElementById('dm-y3req').value = dosage * apps * y3;
+}
+
+function addDemandEntry() {
+  const lt = document.getElementById('dm-landtype').value;
+  const st = document.getElementById('dm-soiltype').value;
+  const sn = document.getElementById('dm-season').value;
+  const cn = document.getElementById('dm-cropname').value;
+  const conc = document.getElementById('dm-concoction').value;
+  if (!lt || !st || !sn || !cn || !conc) { alert('Please fill all required fields (*)'); return; }
+  const dosage = parseFloat(document.getElementById('dm-dosage').value) || 0;
+  const apps = parseFloat(document.getElementById('dm-applications').value) || 0;
+  const acres = parseFloat(document.getElementById('dm-acres').value) || 0;
+  const y1 = parseFloat(document.getElementById('dm-y1acres').value) || 0;
+  const y2 = parseFloat(document.getElementById('dm-y2acres').value) || 0;
+  const y3 = parseFloat(document.getElementById('dm-y3acres').value) || 0;
+  const dur = parseFloat(document.getElementById('dm-duration').value) || 0;
+  const entry = {
+    landType: lt, soilType: st, season: sn, cropName: cn,
+    sowingMonth: document.getElementById('dm-sowingmonth').value,
+    durationDays: dur, durationMonths: dur > 0 ? dur/30 : 0,
+    totalAcres: acres, farmers: parseInt(document.getElementById('dm-farmers').value)||0,
+    purpose: document.getElementById('dm-purpose').value,
+    concoctionName: conc,
+    applicationType: document.getElementById('dm-apptype').value,
+    dosage, applications: apps,
+    maxTotalReq: acres * dosage * apps,
+    y1Acres: y1, y1Req: dosage * apps * y1,
+    y2Acres: y2, y2Req: dosage * apps * y2,
+    y3Acres: y3, y3Req: dosage * apps * y3
+  };
+  appData.demandMapping.push(entry);
+  saveData();
+  renderDMTable();
+  clearDMForm();
+}
+
+function deleteDMEntry(idx) {
+  if (!confirm('Delete this entry?')) return;
+  appData.demandMapping.splice(idx, 1);
+  saveData();
+  renderDMTable();
+}
+
+function renderDMTable() {
+  const tbody = document.getElementById('dm-tbody');
+  const empty = document.getElementById('dm-empty');
+  const badge = document.getElementById('dm-count-badge');
+  const rows = appData.demandMapping;
+  badge.textContent = rows.length + ' entries';
+  if (!rows.length) { tbody.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = rows.map((r,i) => `
+    <tr>
+      <td>${r.landType}</td>
+      <td>${r.soilType}</td>
+      <td><span class="badge ${r.season==='Kharif'?'badge-green':'badge-blue'}">${r.season}</span></td>
+      <td>${r.cropName}</td>
+      <td>${r.sowingMonth||'-'}</td>
+      <td class="number">${r.durationDays||'-'}</td>
+      <td class="number">${r.totalAcres}</td>
+      <td style="max-width:120px;font-size:11px">${r.purpose||'-'}</td>
+      <td><strong>${r.concoctionName}</strong></td>
+      <td style="font-size:11px">${r.applicationType||'-'}</td>
+      <td class="number">${r.dosage}</td>
+      <td class="number">${r.applications}</td>
+      <td class="calc">${fmt(r.maxTotalReq)}</td>
+      <td class="number">${r.y1Acres}</td>
+      <td class="calc">${fmt(r.y1Req)}</td>
+      <td class="number">${r.y2Acres}</td>
+      <td class="calc">${fmt(r.y2Req)}</td>
+      <td class="number">${r.y3Acres}</td>
+      <td class="calc">${fmt(r.y3Req)}</td>
+      <td class="act"><button class="del-btn" onclick="deleteDMEntry(${i})" title="Delete">✕</button></td>
+    </tr>`).join('');
+}
+
+function clearDMForm() {
+  ['dm-landtype','dm-soiltype','dm-season','dm-cropname','dm-sowingmonth','dm-purpose','dm-concoction','dm-apptype']
+    .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  ['dm-duration','dm-duration-months','dm-acres','dm-farmers','dm-dosage','dm-applications',
+   'dm-y1acres','dm-y2acres','dm-y3acres','dm-max-req','dm-y1req','dm-y2req','dm-y3req']
+    .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+}
+
+// ===== PRODUCT COSTING =====
+let pcIngredients = [];
+
+function addIngredientRow(ingr='', unit='', qty=0, rate=0) {
+  const cont = document.getElementById('pc-ingredients-container');
+  const row = document.createElement('div');
+  row.style.cssText = 'display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 40px;gap:8px;margin-bottom:8px;align-items:end';
+  const matCost = qty && rate ? (qty*rate).toFixed(2) : 0;
+  row.innerHTML = `
+    <div class="form-group"><label>Ingredient</label>
+      <select onchange="autoFillIngredient(this)" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 11px;border-radius:6px;font-size:13px;width:100%">
+        <option value="">Select...</option>
+        ${dvLists.ingredients.map(i=>`<option value="${i}" ${i===ingr?'selected':''}>${i}</option>`).join('')}
+      </select></div>
+    <div class="form-group"><label>Unit</label>
+      <select style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 11px;border-radius:6px;font-size:13px">
+        ${dvLists.units.map(u=>`<option value="${u}" ${u===unit?'selected':''}>${u}</option>`).join('')}
+      </select></div>
+    <div class="form-group"><label>Qty (kg/ltr)</label>
+      <input type="number" value="${qty||''}" placeholder="0" step="0.01" oninput="calcIngredientCost(this)">
+    </div>
+    <div class="form-group"><label>Unit Rate (Rs)</label>
+      <input type="number" value="${rate||''}" placeholder="0" step="0.01" oninput="calcIngredientCost(this)">
+    </div>
+    <div class="form-group"><label>Material Cost</label>
+      <input type="number" class="calculated" readonly value="${matCost}">
+    </div>
+    <div class="form-group"><label>&nbsp;</label>
+      <button class="btn btn-danger btn-sm" onclick="this.closest('div[style]').remove()">✕</button>
+    </div>`;
+  cont.appendChild(row);
+}
+
+function autoFillIngredient(sel) {
+  const row = sel.closest('div[style]');
+  const ingr = sel.value;
+  if (ingr && dvLists.ingredientData[ingr]) {
+    const d = dvLists.ingredientData[ingr];
+    const inputs = row.querySelectorAll('input,select');
+    // unit select = row.querySelectorAll('select')[1]
+    row.querySelectorAll('select')[1].value = d.unit;
+    inputs[1].value = d.rate; // unit rate
+  }
+}
+
+function calcIngredientCost(inp) {
+  const row = inp.closest('div[style]');
+  const inputs = row.querySelectorAll('input[type="number"]');
+  const qty = parseFloat(inputs[0].value)||0;
+  const rate = parseFloat(inputs[1].value)||0;
+  inputs[2].value = (qty*rate).toFixed(2);
+}
+
+function getIngredientsFromForm() {
+  const cont = document.getElementById('pc-ingredients-container');
+  const rows = cont.querySelectorAll('div[style]');
+  return Array.from(rows).map(row => {
+    const sels = row.querySelectorAll('select');
+    const inps = row.querySelectorAll('input[type="number"]');
+    return {
+      name: sels[0].value,
+      unit: sels[1].value,
+      qty: parseFloat(inps[0].value)||0,
+      unitRate: parseFloat(inps[1].value)||0,
+      materialCost: parseFloat(inps[2].value)||0
+    };
+  }).filter(r => r.name);
+}
+
+function saveConcoctionCosting() {
+  const concName = document.getElementById('pc-concoction').value;
+  if (!concName) { alert('Please select a concoction name'); return; }
+  const batch = parseFloat(document.getElementById('pc-batch').value)||0;
+  const labHrs = parseFloat(document.getElementById('pc-labourhrs').value)||0;
+  const wage = parseFloat(document.getElementById('pc-wage').value)||50;
+  const filtrate = parseFloat(document.getElementById('pc-filtrate').value)||0.9;
+  const salesPrice = parseFloat(document.getElementById('pc-salesprice').value)||0;
+  const ingredients = getIngredientsFromForm();
+  const materialCostTotal = ingredients.reduce((s,i) => s+i.materialCost, 0);
+  const labourExpPerBatch = labHrs * wage;
+  const costPerBatch = materialCostTotal + labourExpPerBatch;
+  const costPerUnit = filtrate > 0 && batch > 0 ? costPerBatch / (filtrate * batch) : 0;
+  const labourCostPerUnit = batch > 0 ? labourExpPerBatch / batch : 0;
+  const entry = {
+    name: concName, batchSize: batch,
+    prepTime: parseFloat(document.getElementById('pc-preptime').value)||0,
+    shelfLife: parseFloat(document.getElementById('pc-shelflife').value)||0,
+    labourHrs: labHrs, wage, filtrate, salesPrice, ingredients,
+    materialCostTotal, labourExpPerBatch, costPerBatch, costPerUnit, labourCostPerUnit
+  };
+  const existing = appData.productCosting.findIndex(p => p.name === concName);
+  if (existing >= 0) { appData.productCosting[existing] = entry; }
+  else { appData.productCosting.push(entry); }
+  saveData();
+  renderPCList();
+  clearPCForm();
+}
+
+function renderPCList() {
+  const list = document.getElementById('pc-list');
+  const empty = document.getElementById('pc-empty');
+  const badge = document.getElementById('pc-count-badge');
+  badge.textContent = appData.productCosting.length;
+  if (!appData.productCosting.length) { list.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display = 'none';
+  list.innerHTML = appData.productCosting.map((p,i) => `
+    <div class="concoction-block">
+      <div class="concoction-header" onclick="toggleConcoction(${i})">
+        <div>
+          <div class="concoction-name">${p.name}</div>
+          <div class="concoction-meta">
+            <span>Batch: ${p.batchSize} ltrs/kg</span>
+            <span>Filtrate: ${(p.filtrate*100).toFixed(0)}%</span>
+            <span>Cost/Unit: <strong style="color:var(--amber)">₹${p.costPerUnit.toFixed(2)}</strong></span>
+            <span>Sales Price: <strong style="color:var(--green)">₹${p.salesPrice}</strong></span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();loadConcoctionForEdit(${i})">✏️ Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteCosting(${i})">✕</button>
+          <span class="expand-icon">▼</span>
+        </div>
+      </div>
+      <div class="concoction-body" id="cblock-${i}">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Ingredient</th><th>Unit</th><th>Qty</th><th>Rate (Rs)</th><th>Material Cost (Rs)</th></tr></thead>
+            <tbody>
+              ${p.ingredients.map(ing=>`<tr>
+                <td>${ing.name}</td><td>${ing.unit}</td>
+                <td class="number">${ing.qty}</td><td class="number">${ing.unitRate}</td>
+                <td class="calc">${fmt(ing.materialCost)}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px">
+          <div class="stat-card"><div class="stat-label">Material Cost/Batch</div><div class="stat-value amber">₹${fmt(p.materialCostTotal)}</div></div>
+          <div class="stat-card"><div class="stat-label">Labour Exp/Batch</div><div class="stat-value blue">₹${fmt(p.labourExpPerBatch)}</div></div>
+          <div class="stat-card"><div class="stat-label">Cost Per Unit</div><div class="stat-value amber">₹${p.costPerUnit.toFixed(2)}</div></div>
+          <div class="stat-card"><div class="stat-label">Sales Price/Unit</div><div class="stat-value green">₹${p.salesPrice}</div></div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function toggleConcoction(i) {
+  const body = document.getElementById(`cblock-${i}`);
+  body.classList.toggle('open');
+}
+
+function loadConcoctionForEdit(i) {
+  const p = appData.productCosting[i];
+  document.getElementById('pc-concoction').value = p.name;
+  document.getElementById('pc-batch').value = p.batchSize;
+  document.getElementById('pc-preptime').value = p.prepTime;
+  document.getElementById('pc-shelflife').value = p.shelfLife;
+  document.getElementById('pc-labourhrs').value = p.labourHrs;
+  document.getElementById('pc-wage').value = p.wage;
+  document.getElementById('pc-filtrate').value = p.filtrate;
+  document.getElementById('pc-salesprice').value = p.salesPrice;
+  document.getElementById('pc-ingredients-container').innerHTML = '';
+  p.ingredients.forEach(ing => addIngredientRow(ing.name, ing.unit, ing.qty, ing.unitRate));
+  showPage('product-costing');
+  document.getElementById('pc-concoction').scrollIntoView({behavior:'smooth'});
+}
+
+function deleteCosting(i) {
+  if (!confirm('Delete this costing?')) return;
+  appData.productCosting.splice(i, 1);
+  saveData();
+  renderPCList();
+}
+
+function clearPCForm() {
+  document.getElementById('pc-concoction').value = '';
+  ['pc-batch','pc-preptime','pc-shelflife','pc-labourhrs','pc-salesprice'].forEach(id => { document.getElementById(id).value=''; });
+  document.getElementById('pc-wage').value = 50;
+  document.getElementById('pc-filtrate').value = '';
+  document.getElementById('pc-ingredients-container').innerHTML = '';
+}
+
+// ===== DEMAND PROJECTION =====
+function buildDemandProjection() {
+  const dm = appData.demandMapping;
+  const pc = appData.productCosting;
+  const concNames = [...new Set(dvLists.concoctions.filter(c => dm.some(d => d.concoctionName === c)))];
+  const seasons = ['Kharif','Rabi'];
+
+  function projectForYear(yearKey, acresKey, reqKey) {
+    const proj = {};
+    dm.forEach(d => {
+      const key = d.concoctionName;
+      if (!proj[key]) proj[key] = {Kharif:{acres:0,req:0}, Rabi:{acres:0,req:0}};
+      const s = d.season === 'Kharif' ? 'Kharif' : (d.season === 'Rabi' ? 'Rabi' : null);
+      if (s) {
+        proj[key][s].acres += d[acresKey]||0;
+        proj[key][s].req += d[reqKey]||0;
+      }
+    });
+    return proj;
+  }
+
+  const y1 = projectForYear(1,'y1Acres','y1Req');
+  const y2 = projectForYear(2,'y2Acres','y2Req');
+  const y3 = projectForYear(3,'y3Acres','y3Req');
+
+  function urineReq(concName, totalReqPerMonth) {
+    // From Demand projection formula logic
+    const pcItem = pc.find(p => p.name === concName);
+    if (!pcItem || pcItem.batchSize <= 0) return 0;
+    // Urine per ltr of product = (cow urine qty in batch / batch size) * requirement
+    const cowUrineIng = pcItem.ingredients.find(i => i.name === 'Cow urine');
+    if (!cowUrineIng) return 0;
+    return totalReqPerMonth * (cowUrineIng.qty / pcItem.batchSize);
+  }
+
+  function renderYear(proj, yearLabel) {
+    let rows = '';
+    let totalKharAcres=0, totalKharReq=0, totalRabiAcres=0, totalRabiReq=0;
+    const concList = [...new Set([...Object.keys(proj)])];
+    concList.forEach(c => {
+      const kh = proj[c]?.Kharif||{acres:0,req:0};
+      const rb = proj[c]?.Rabi||{acres:0,req:0};
+      const totalReq = kh.req + rb.req;
+      const avgMonth = totalReq / 8;
+      const urine = urineReq(c, avgMonth);
+      totalKharAcres += kh.acres; totalKharReq += kh.req;
+      totalRabiAcres += rb.acres; totalRabiReq += rb.req;
+      rows += `<tr>
+        <td><strong>${c}</strong></td>
+        <td class="number">${fmt(kh.acres)}</td><td class="calc">${fmt(kh.req)}</td>
+        <td class="number">${fmt(rb.acres)}</td><td class="calc">${fmt(rb.req)}</td>
+        <td class="number">${fmt(kh.acres+rb.acres)}</td>
+        <td class="calc">${fmt(totalReq)}</td>
+        <td class="calc">${fmt(totalReq)}</td>
+        <td class="number">${avgMonth.toFixed(1)}</td>
+        <td class="calc">${urine>0?fmt(urine):'-'}</td>
+      </tr>`;
+    });
+    const totalReqAll = totalKharReq + totalRabiReq;
+    const totalUrineMonth = concList.reduce((s,c) => {
+      const totalReq = (proj[c]?.Kharif?.req||0) + (proj[c]?.Rabi?.req||0);
+      return s + urineReq(c, totalReq/8);
+    }, 0);
+    return `
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title">${yearLabel} <span class="badge badge-blue">Projection</span></div>
+        <div class="table-wrap"><table>
+          <thead><tr>
+            <th rowspan="2">Concoction</th>
+            <th colspan="2" style="text-align:center;border-left:1px solid var(--border)">Kharif</th>
+            <th colspan="2" style="text-align:center;border-left:1px solid var(--border)">Rabi</th>
+            <th rowspan="2">Total Acres</th><th rowspan="2">Total Req (ltrs)</th>
+            <th rowspan="2">Total Req (ltrs-kg)</th><th rowspan="2">Avg/Month</th><th rowspan="2">Urine Req/Month</th>
+          </tr>
+          <tr>
+            <th style="border-left:1px solid var(--border)">Acres</th><th>Req (ltrs)</th>
+            <th style="border-left:1px solid var(--border)">Acres</th><th>Req (ltrs)</th>
+          </tr></thead>
+          <tbody>${rows}
+            <tr class="total-row">
+              <td>Grand Total</td>
+              <td>${fmt(totalKharAcres)}</td><td>${fmt(totalKharReq)}</td>
+              <td>${fmt(totalRabiAcres)}</td><td>${fmt(totalRabiReq)}</td>
+              <td>${fmt(totalKharAcres+totalRabiAcres)}</td>
+              <td>${fmt(totalReqAll)}</td><td>${fmt(totalReqAll)}</td>
+              <td>${(totalReqAll/8).toFixed(1)}</td><td></td>
+            </tr>
+          </tbody>
+        </table></div>
+        <div class="pl-row" style="margin-top:14px">
+          <div class="label">Total Monthly Urine Requirement (ltr)</div>
+          <div class="value" style="color:var(--amber);font-size:18px;font-family:var(--font-head)">${fmt(totalUrineMonth)} ltr/month</div>
+        </div>
+      </div>`;
+  }
+
+  return renderYear(y1,'Year 1') + renderYear(y2,'Year 2') + renderYear(y3,'Year 3');
+}
+
+// ===== CAPITAL COST =====
+function buildCapitalCost() {
+  const cc = appData.capitalCost;
+  const dm = appData.demandMapping;
+  const pc = appData.productCosting;
+
+  function getUrineRequired(yearAcresKey, yearReqKey) {
+    let total = 0;
+    dm.forEach(d => {
+      const concName = d.concoctionName;
+      const pcItem = pc.find(p => p.name === concName);
+      if (!pcItem || pcItem.batchSize <= 0) return;
+      const cowUrineIng = pcItem.ingredients.find(i => i.name === 'Cow urine');
+      if (!cowUrineIng) return;
+      const req = d[yearReqKey] || 0;
+      total += (req / 8) * (cowUrineIng.qty / pcItem.batchSize);
+    });
+    return total;
+  }
+
+  const urineY1 = getUrineRequired('y1Acres','y1Req');
+  const urineY2 = getUrineRequired('y2Acres','y2Req');
+  const urineY3 = getUrineRequired('y3Acres','y3Req');
+
+  const litresPerDay = cc.urineLitresPerDayPerCattle;
+  const litresPerMonth = litresPerDay * 30;
+  const cattleY1 = urineY1 > 0 ? Math.ceil(urineY1 / litresPerMonth) : 0;
+  const cattleY2 = urineY2 > 0 ? Math.ceil(urineY2 / litresPerMonth) : 0;
+  const cattleY3 = urineY3 > 0 ? Math.ceil(urineY3 / litresPerMonth) : 0;
+  const volConcreteY1 = cattleY1 * cc.avgAreaPerCattle * cc.avgDepthConcrete;
+  const volConcreteY2 = cattleY2 * cc.avgAreaPerCattle * cc.avgDepthConcrete;
+  const volConcreteY3 = cattleY3 * cc.avgAreaPerCattle * cc.avgDepthConcrete;
+  const shedLiningY1 = volConcreteY1 * cc.avgRateLining;
+  const shedLiningY2 = volConcreteY2 * cc.avgRateLining;
+  const shedLiningY3 = volConcreteY3 * cc.avgRateLining;
+
+  const totalA = cc.items.reduce((s,i) => s + i.qty*i.unitRate, 0);
+  const deprA = cc.items.reduce((s,i) => s + (i.qty*i.unitRate)/i.usefulLife, 0);
+  const pipelineCost = cc.urineSystem.pipelineNetworkCost;
+  const sumpCost = cc.urineSystem.sumpQty * cc.urineSystem.sumpUnitRate;
+  const totalB = shedLiningY1 + pipelineCost + sumpCost;
+  const deprB = pipelineCost/10 + sumpCost/10;
+  const totalCDE = cc.othersWorks + cc.transportation;
+  const totalABCDE = totalA + totalB + totalCDE;
+  const totalE = cc.equipment.reduce((s,e) => s + e.qty*e.unitRate, 0);
+  const deprE = cc.equipment.reduce((s,e) => s + (e.qty*e.unitRate)/e.usefulLife, 0);
+  const grandTotal = totalABCDE + totalE;
+  const totalDepr = deprA + deprB + deprE;
+
+  return `
+    <div class="stats-grid" style="margin-bottom:20px">
+      <div class="stat-card"><div class="stat-label">Urine Req/Month Y1</div><div class="stat-value blue">${fmt(urineY1)} ltr</div></div>
+      <div class="stat-card"><div class="stat-label">Urine Req/Month Y2</div><div class="stat-value blue">${fmt(urineY2)} ltr</div></div>
+      <div class="stat-card"><div class="stat-label">Urine Req/Month Y3</div><div class="stat-value blue">${fmt(urineY3)} ltr</div></div>
+      <div class="stat-card"><div class="stat-label">Min Cattle Required Y1</div><div class="stat-value amber">${cattleY1}</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Urine Collection Parameters</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Parameter</th><th>Details</th><th>Year 1</th><th>Year 2</th><th>Year 3</th></tr></thead>
+        <tbody>
+          <tr><td>Urine required/month (ltrs)</td><td></td><td class="calc">${fmt(urineY1)}</td><td class="calc">${fmt(urineY2)}</td><td class="calc">${fmt(urineY3)}</td></tr>
+          <tr><td>Urine collected/day per one Desi cattle (ltr)</td><td><input type="number" value="${cc.urineLitresPerDayPerCattle}" style="width:80px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px" onchange="appData.capitalCost.urineLitresPerDayPerCattle=parseFloat(this.value)||1.5;saveData();renderCapitalCost()"></td><td class="number">${litresPerDay}</td><td class="number">${litresPerDay}</td><td class="number">${litresPerDay}</td></tr>
+          <tr><td>Urine collected/month per one Desi cattle (ltr)</td><td></td><td class="calc">${litresPerMonth}</td><td class="calc">${litresPerMonth}</td><td class="calc">${litresPerMonth}</td></tr>
+          <tr><td>Min. no of cattle required</td><td></td><td class="calc">${cattleY1}</td><td class="calc">${cattleY2}</td><td class="calc">${cattleY3}</td></tr>
+          <tr><td>Urine surplus collected (4 months off season)</td><td></td><td class="calc">${fmt(urineY1*4)}</td><td class="calc">${fmt(urineY2*4)}</td><td class="calc">${fmt(urineY3*4)}</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <div class="card-title">A. BRC Fermenter Unit Infrastructure</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>S.No</th><th>Cost Component</th><th>UOM</th><th>Qty</th><th>Unit Rate (Rs)</th><th>Amount (Rs)</th><th>Useful Life</th><th>Annual Depr (Rs)</th></tr></thead>
+        <tbody>
+          ${cc.items.map((item,i) => `
+          <tr>
+            <td>${item.sno}</td><td>${item.description}</td><td>${item.uom}</td>
+            <td><input type="number" value="${item.qty}" style="width:60px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:4px" onchange="appData.capitalCost.items[${i}].qty=parseInt(this.value)||1;saveData();renderCapitalCost()"></td>
+            <td><input type="number" value="${item.unitRate}" style="width:90px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:4px" onchange="appData.capitalCost.items[${i}].unitRate=parseFloat(this.value)||0;saveData();renderCapitalCost()"></td>
+            <td class="calc">₹${fmt(item.qty*item.unitRate)}</td>
+            <td class="number">${item.usefulLife} yrs</td>
+            <td class="calc">₹${fmt((item.qty*item.unitRate)/item.usefulLife)}</td>
+          </tr>`).join('')}
+          <tr class="total-row"><td colspan="5"><strong>Total A</strong></td><td class="calc">₹${fmt(totalA)}</td><td></td><td class="calc">₹${fmt(deprA)}</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <div class="card-title">B. Urine Collection System</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Item</th><th>Amount (Rs)</th><th>Useful Life</th><th>Annual Depr (Rs)</th></tr></thead>
+        <tbody>
+          <tr><td>Cow shed lining & chamber (community contribution)</td><td class="calc">₹${fmt(shedLiningY1)}</td><td>10 yrs</td><td class="calc">₹${fmt(shedLiningY1/10)}</td></tr>
+          <tr><td>Pipeline network & chamber - PVC/UPVC Pipes</td>
+            <td><input type="number" value="${pipelineCost}" style="width:100px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:4px" onchange="appData.capitalCost.urineSystem.pipelineNetworkCost=parseFloat(this.value)||0;saveData();renderCapitalCost()"></td>
+            <td>10 yrs</td><td class="calc">₹${fmt(pipelineCost/10)}</td></tr>
+          <tr><td>Sump (precast cement rings) - 1000 ltr</td><td class="calc">₹${fmt(sumpCost)}</td><td>10 yrs</td><td class="calc">₹${fmt(sumpCost/10)}</td></tr>
+          <tr class="total-row"><td><strong>Total B</strong></td><td class="calc">₹${fmt(totalB)}</td><td></td><td class="calc">₹${fmt(deprB)}</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <div class="card-title">C & D. Others & Transportation</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Item</th><th>Amount (Rs)</th></tr></thead>
+        <tbody>
+          <tr><td>C. Others works (foundation, plumber fee etc)</td>
+            <td><input type="number" value="${cc.othersWorks}" style="width:100px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:4px" onchange="appData.capitalCost.othersWorks=parseFloat(this.value)||0;saveData();renderCapitalCost()"></td></tr>
+          <tr><td>D. Transportation</td>
+            <td><input type="number" value="${cc.transportation}" style="width:100px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:4px" onchange="appData.capitalCost.transportation=parseFloat(this.value)||0;saveData();renderCapitalCost()"></td></tr>
+          <tr class="total-row"><td><strong>Total A+B+C+D</strong></td><td class="calc">₹${fmt(totalABCDE)}</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <div class="card-title">E. Material Handling & Equipment</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Item</th><th>UOM</th><th>Qty</th><th>Unit Rate (Rs)</th><th>Amount (Rs)</th><th>Useful Life</th><th>Annual Depr (Rs)</th></tr></thead>
+        <tbody>
+          ${cc.equipment.map((e,i) => `
+          <tr>
+            <td>${e.description}</td><td>${e.uom}</td>
+            <td><input type="number" value="${e.qty}" style="width:60px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:4px" onchange="appData.capitalCost.equipment[${i}].qty=parseInt(this.value)||1;saveData();renderCapitalCost()"></td>
+            <td><input type="number" value="${e.unitRate}" style="width:90px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:4px" onchange="appData.capitalCost.equipment[${i}].unitRate=parseFloat(this.value)||0;saveData();renderCapitalCost()"></td>
+            <td class="calc">₹${fmt(e.qty*e.unitRate)}</td>
+            <td class="number">${e.usefulLife} yrs</td>
+            <td class="calc">₹${fmt((e.qty*e.unitRate)/e.usefulLife)}</td>
+          </tr>`).join('')}
+          <tr class="total-row"><td colspan="4"><strong>Total E</strong></td><td class="calc">₹${fmt(totalE)}</td><td></td><td class="calc">₹${fmt(deprE)}</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="card" style="border-color:var(--amber)">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Grand Total Capital Cost</div><div class="stat-value amber">₹${fmt(grandTotal)}</div></div>
+        <div class="stat-card"><div class="stat-label">Total Annual Depreciation</div><div class="stat-value blue">₹${fmt(totalDepr)}</div></div>
+      </div>
+    </div>`;
+}
+
+function renderCapitalCost() {
+  document.getElementById('cc-content').innerHTML = buildCapitalCost();
+}
+
+// ===== MAX DEMAND =====
+function buildMaxDemand() {
+  const dm = appData.demandMapping;
+  const pc = appData.productCosting;
+  const concNames = [...new Set(dm.map(d => d.concoctionName))];
+  function getUrineRatio(concName) {
+    const pcItem = pc.find(p => p.name === concName);
+    if (!pcItem || pcItem.batchSize <= 0) return 0;
+    const cowUrineIng = pcItem.ingredients.find(i => i.name === 'Cow urine');
+    if (!cowUrineIng) return 0;
+    return cowUrineIng.qty / pcItem.batchSize;
+  }
+  let rows = '';
+  let totalKharAcres=0, totalKharReq=0, totalRabiAcres=0, totalRabiReq=0;
+  let totalUrineKharif=0, totalUrineRabi=0;
+  concNames.forEach(c => {
+    const kh = dm.filter(d=>d.concoctionName===c && d.season==='Kharif');
+    const rb = dm.filter(d=>d.concoctionName===c && d.season==='Rabi');
+    const khAcres = kh.reduce((s,d)=>s+d.totalAcres,0);
+    const khReq = kh.reduce((s,d)=>s+d.maxTotalReq,0);
+    const rbAcres = rb.reduce((s,d)=>s+d.totalAcres,0);
+    const rbReq = rb.reduce((s,d)=>s+d.maxTotalReq,0);
+    const ratio = getUrineRatio(c);
+    const urineKh = khReq * ratio;
+    const urineRb = rbReq * ratio;
+    totalKharAcres += khAcres; totalKharReq += khReq;
+    totalRabiAcres += rbAcres; totalRabiReq += rbReq;
+    totalUrineKharif += urineKh; totalUrineRabi += urineRb;
+    const crops = [...new Set([...kh.map(d=>d.cropName),...rb.map(d=>d.cropName)])];
+    rows += `<tr>
+      <td><strong>${c}</strong></td>
+      <td class="number">${fmt(khAcres)}</td><td class="calc">${fmt(khReq)}</td>
+      <td class="number">${fmt(rbAcres)}</td><td class="calc">${fmt(rbReq)}</td>
+      <td class="number">${fmt(khAcres+rbAcres)}</td><td class="calc">${fmt(khReq+rbReq)}</td>
+      <td class="calc">${urineKh>0?fmt(urineKh):'-'}</td>
+      <td class="calc">${urineRb>0?fmt(urineRb):'-'}</td>
+    </tr>
+    ${crops.map(crop => {
+      const ckh = dm.filter(d=>d.concoctionName===c&&d.cropName===crop&&d.season==='Kharif');
+      const crb = dm.filter(d=>d.concoctionName===c&&d.cropName===crop&&d.season==='Rabi');
+      if (!ckh.length && !crb.length) return '';
+      return `<tr style="opacity:0.6;font-size:11px">
+        <td style="padding-left:24px">↳ ${crop}</td>
+        <td>${fmt(ckh.reduce((s,d)=>s+d.totalAcres,0))}</td>
+        <td>${fmt(ckh.reduce((s,d)=>s+d.maxTotalReq,0))}</td>
+        <td>${fmt(crb.reduce((s,d)=>s+d.totalAcres,0))}</td>
+        <td>${fmt(crb.reduce((s,d)=>s+d.maxTotalReq,0))}</td>
+        <td colspan="4"></td>
+      </tr>`;
+    }).join('')}`;
+  });
+
+  return `
+    <div class="stats-grid" style="margin-bottom:20px">
+      <div class="stat-card"><div class="stat-label">Total Urine Req (Kharif)</div><div class="stat-value amber">${fmt(totalUrineKharif)} ltr</div></div>
+      <div class="stat-card"><div class="stat-label">Total Urine Req (Rabi)</div><div class="stat-value blue">${fmt(totalUrineRabi)} ltr</div></div>
+      <div class="stat-card"><div class="stat-label">Combined Urine Req</div><div class="stat-value green">${fmt(totalUrineKharif+totalUrineRabi)} ltr</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Maximum Demand in the Landscape <span class="badge badge-amber">Full Saturation</span></div>
+      <div class="alert alert-warn">This shows maximum demand when all available acres are under cultivation (100% coverage).</div>
+      <div class="table-wrap"><table>
+        <thead>
+          <tr>
+            <th rowspan="2">Row Labels</th>
+            <th colspan="2" style="text-align:center;border-left:1px solid var(--border)">Kharif</th>
+            <th colspan="2" style="text-align:center;border-left:1px solid var(--border)">Rabi</th>
+            <th rowspan="2">Total Acres</th><th rowspan="2">Total Req (ltrs)</th>
+            <th rowspan="2">Urine Req (Kharif)</th><th rowspan="2">Urine Req (Rabi)</th>
+          </tr>
+          <tr>
+            <th style="border-left:1px solid var(--border)">Acres</th><th>Req (ltrs)</th>
+            <th style="border-left:1px solid var(--border)">Acres</th><th>Req (ltrs)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+          <tr class="total-row">
+            <td>Grand Total</td>
+            <td>${fmt(totalKharAcres)}</td><td>${fmt(totalKharReq)}</td>
+            <td>${fmt(totalRabiAcres)}</td><td>${fmt(totalRabiReq)}</td>
+            <td>${fmt(totalKharAcres+totalRabiAcres)}</td><td>${fmt(totalKharReq+totalRabiReq)}</td>
+            <td>${fmt(totalUrineKharif)}</td><td>${fmt(totalUrineRabi)}</td>
+          </tr>
+          <tr style="background:var(--surface2)">
+            <td colspan="7"><strong>Total Urine Requirement</strong></td>
+            <td class="calc" style="color:var(--amber)"><strong>${fmt(totalUrineKharif)}</strong></td>
+            <td class="calc" style="color:var(--amber)"><strong>${fmt(totalUrineRabi)}</strong></td>
+          </tr>
+        </tbody>
+      </table></div>
+    </div>`;
+}
+
+// ===== P&L =====
+function buildPL() {
+  const dm = appData.demandMapping;
+  const pc = appData.productCosting;
+  const cc = appData.capitalCost;
+  const pls = appData.plSettings;
+
+  // Year 1 total requirement per concoction
+  function y1Req(concName) {
+    return dm.filter(d=>d.concoctionName===concName).reduce((s,d)=>s+d.y1Req,0);
+  }
+  function getSalesPrice(concName) {
+    const p = pc.find(p=>p.name===concName);
+    return p ? p.salesPrice : 0;
+  }
+  function getCostPerUnit(concName) {
+    const p = pc.find(p=>p.name===concName);
+    return p ? p.costPerUnit : 0;
+  }
+  function getLabourCostPerUnit(concName) {
+    const p = pc.find(p=>p.name===concName);
+    return p ? p.labourCostPerUnit : 0;
+  }
+
+  const mainConcoctions = ['Beejamrutham','Brahmastra','Dravajeevamrutham','Egg amino acid','Fish amino acid','Ghanajeevamrutham T2','Humic Acid','Neemastra','Panchagavya','Panchpatri kashayam','Sapthaginjala Kashaya','Sour buttermilk'];
+  const pheromoneQty = pls.pheromoneTrapsQty || 200;
+  const yellowQty = pls.yellowPlatesQty || 2000;
+  const cowUrineSurplus = cc ? ((() => {
+    const dm2 = appData.demandMapping;
+    const pc2 = appData.productCosting;
+    let total = 0;
+    dm2.forEach(d => {
+      const pcItem = pc2.find(p=>p.name===d.concoctionName);
+      if (!pcItem || pcItem.batchSize <= 0) return;
+      const cowUrineIng = pcItem.ingredients.find(i=>i.name==='Cow urine');
+      if (!cowUrineIng) return;
+      total += (d.y1Req/8) * (cowUrineIng.qty/pcItem.batchSize);
+    });
+    return total * 4;
+  })()) : 0;
+
+  let revenueRows = '';
+  let totalRevenue = 0;
+  mainConcoctions.forEach(c => {
+    const qty = y1Req(c);
+    const price = getSalesPrice(c);
+    const rev = qty * price;
+    totalRevenue += rev;
+    revenueRows += `<tr>
+      <td>${c}</td>
+      <td class="number">${fmt(qty)}</td>
+      <td class="number">₹${price}</td>
+      <td class="calc">₹${fmt(rev)}</td>
+    </tr>`;
+  });
+  const pheromoneRev = pheromoneQty * (getSalesPrice('Pheromone traps')||35);
+  const yellowRev = yellowQty * (getSalesPrice('Yellow plates')||10);
+  const cowUrineRev = cowUrineSurplus * pls.cowUrineSalePrice;
+  totalRevenue += pheromoneRev + yellowRev + cowUrineRev;
+
+  let costRows = '';
+  let totalCost = 0;
+  let totalLabour = 0;
+  mainConcoctions.forEach(c => {
+    const qty = y1Req(c);
+    const cpu = getCostPerUnit(c);
+    const lpu = getLabourCostPerUnit(c);
+    const tc = qty * cpu;
+    const tl = qty * lpu;
+    totalCost += tc;
+    totalLabour += tl;
+    costRows += `<tr>
+      <td>${c}</td>
+      <td class="number">₹${cpu.toFixed(2)}</td>
+      <td class="calc">₹${fmt(tc)}</td>
+      <td class="number">₹${fmt(tl)}</td>
+    </tr>`;
+  });
+  totalCost += pheromoneQty*30 + yellowQty*5;
+
+  const grossMargin = totalRevenue - totalCost;
+  const wastage = pls.wastagePercent * totalCost;
+  const deprTotal = (() => {
+    const items = cc.items;
+    const eq = cc.equipment;
+    const us = cc.urineSystem;
+    const deprA = items.reduce((s,i) => s+(i.qty*i.unitRate)/i.usefulLife, 0);
+    const deprE = eq.reduce((s,e) => s+(e.qty*e.unitRate)/e.usefulLife, 0);
+    const deprB = us.pipelineNetworkCost/10 + (us.sumpQty*us.sumpUnitRate)/10;
+    return deprA + deprB + deprE;
+  })();
+  const salesDist = pls.salesDistExpenses * 12;
+  const otherExpenses = wastage + deprTotal + salesDist;
+  const netProfit = grossMargin - otherExpenses;
+  const incomeLabour = totalLabour;
+  const totalReturns = netProfit + incomeLabour;
+  const avgMonth = totalReturns / 12;
+
+  const totalCapCost = (() => {
+    const cc2 = appData.capitalCost;
+    const totalA = cc2.items.reduce((s,i) => s+i.qty*i.unitRate, 0);
+    const shedLining = (() => {
+      let urine = 0;
+      dm.forEach(d => {
+        const pcItem = pc.find(p=>p.name===d.concoctionName);
+        if (!pcItem || pcItem.batchSize <= 0) return;
+        const cowUrineIng = pcItem.ingredients.find(i=>i.name==='Cow urine');
+        if (!cowUrineIng) return;
+        urine += (d.y1Req/8) * (cowUrineIng.qty/pcItem.batchSize);
+      });
+      const cattle = urine > 0 ? Math.ceil(urine / (cc2.urineLitresPerDayPerCattle * 30)) : 0;
+      return cattle * cc2.avgAreaPerCattle * cc2.avgDepthConcrete * cc2.avgRateLining;
+    })();
+    const totalB = shedLining + cc2.urineSystem.pipelineNetworkCost + cc2.urineSystem.sumpQty*cc2.urineSystem.sumpUnitRate;
+    const totalE = cc2.equipment.reduce((s,e)=>s+e.qty*e.unitRate,0);
+    return totalA + totalB + cc2.othersWorks + cc2.transportation + totalE;
+  })();
+  const payback = netProfit > 0 ? (totalCapCost / netProfit).toFixed(1) : 'N/A';
+
+  return `
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">Total Revenue</div><div class="stat-value green">₹${fmt(totalRevenue)}</div></div>
+      <div class="stat-card"><div class="stat-label">Total Cost</div><div class="stat-value amber">₹${fmt(totalCost)}</div></div>
+      <div class="stat-card"><div class="stat-label">Gross Margin</div><div class="stat-value ${grossMargin>=0?'green':'red'}">₹${fmt(grossMargin)}</div></div>
+      <div class="stat-card"><div class="stat-label">Net Profit</div><div class="stat-value ${netProfit>=0?'green':'red'}">₹${fmt(netProfit)}</div></div>
+      <div class="stat-card"><div class="stat-label">Total Returns/Year</div><div class="stat-value green">₹${fmt(totalReturns)}</div></div>
+      <div class="stat-card"><div class="stat-label">Avg Returns/Month</div><div class="stat-value green">₹${fmt(avgMonth)}</div></div>
+      <div class="stat-card"><div class="stat-label">Payback Period</div><div class="stat-value amber">${payback} yrs</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Revenue (Year 1)</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Product</th><th>Annual Sales (ltr-kg)</th><th>Sales Price/Unit (Rs)</th><th>Sales Revenue (Rs)</th></tr></thead>
+        <tbody>
+          ${revenueRows}
+          <tr><td>Pheromone traps</td><td class="number">${fmt(pheromoneQty)}</td>
+            <td><input type="number" value="${pls.pheromoneTrapsQty}" style="width:80px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:4px" onchange="appData.plSettings.pheromoneTrapsQty=parseInt(this.value)||0;saveData();renderPL()"> nos</td>
+            <td class="calc">₹${fmt(pheromoneRev)}</td></tr>
+          <tr><td>Yellow plates</td><td class="number">${fmt(yellowQty)}</td>
+            <td><input type="number" value="${pls.yellowPlatesQty}" style="width:80px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:4px" onchange="appData.plSettings.yellowPlatesQty=parseInt(this.value)||0;saveData();renderPL()"> nos</td>
+            <td class="calc">₹${fmt(yellowRev)}</td></tr>
+          <tr><td>Cow urine (surplus)</td><td class="number">${fmt(cowUrineSurplus)} ltr</td>
+            <td>₹<input type="number" value="${pls.cowUrineSalePrice}" style="width:60px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:4px" onchange="appData.plSettings.cowUrineSalePrice=parseFloat(this.value)||0;saveData();renderPL()">/ltr</td>
+            <td class="calc">₹${fmt(cowUrineRev)}</td></tr>
+          <tr class="total-row"><td colspan="3"><strong>Total Revenue</strong></td><td class="calc">₹${fmt(totalRevenue)}</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Material & Labour Expenses (Year 1)</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Product</th><th>Cost/Unit (Rs)</th><th>Total Cost (Rs)</th><th>Labour Exp Only</th></tr></thead>
+        <tbody>${costRows}
+          <tr><td>Pheromone traps</td><td class="number">₹30</td><td class="calc">₹${fmt(pheromoneQty*30)}</td><td>-</td></tr>
+          <tr><td>Yellow plates</td><td class="number">₹5</td><td class="calc">₹${fmt(yellowQty*5)}</td><td>-</td></tr>
+          <tr class="total-row"><td colspan="2"><strong>Total Cost</strong></td><td class="calc">₹${fmt(totalCost)}</td><td></td></tr>
+          <tr class="total-row"><td colspan="2"><strong>Gross Margin</strong></td><td class="calc ${grossMargin>=0?'':'red'}">₹${fmt(grossMargin)}</td><td></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Other Expenses</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Expense</th><th>Details</th><th>Avg/Month (Rs)</th><th>Total (Rs)</th></tr></thead>
+        <tbody>
+          <tr><td>Wastage</td><td>15% of total cost</td><td class="number">-</td><td class="calc">₹${fmt(wastage)}</td></tr>
+          <tr><td>Depreciation</td><td>Annual</td><td class="number">-</td><td class="calc">₹${fmt(deprTotal)}</td></tr>
+          <tr><td>Sales & Distribution expenses</td><td></td>
+            <td><input type="number" value="${pls.salesDistExpenses}" style="width:90px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:4px" onchange="appData.plSettings.salesDistExpenses=parseFloat(this.value)||0;saveData();renderPL()"></td>
+            <td class="calc">₹${fmt(salesDist)}</td></tr>
+          <tr class="total-row"><td colspan="3"><strong>Total Other Expenses</strong></td><td class="calc">₹${fmt(otherExpenses)}</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="card" style="border-color:var(--green)">
+      <div class="card-title">Net Results</div>
+      <div class="pl-row"><div class="label">Net Profit</div><div class="value ${netProfit>=0?'':'red'}">₹${fmt(netProfit)}</div></div>
+      <div class="pl-row"><div class="label">Income from Labour</div><div class="value">₹${fmt(incomeLabour)}</div></div>
+      <div class="pl-row total"><div class="label">Total Annual Returns (Wages + Profit)</div><div class="value ${totalReturns>=0?'green':'red'}">₹${fmt(totalReturns)}</div></div>
+      <div class="pl-row"><div class="label">Avg. Returns/Month</div><div class="value green">₹${fmt(avgMonth)}</div></div>
+    </div>
+    <div class="card" style="border-color:var(--amber)">
+      <div class="card-title">Payback Period</div>
+      <div class="pl-row"><div class="label">Total Capital Cost of Unit</div><div class="value">₹${fmt(totalCapCost)}</div></div>
+      <div class="pl-row"><div class="label">Annual Inflow (Net Profit)</div><div class="value">₹${fmt(netProfit)}</div></div>
+      <div class="pl-row total"><div class="label">Payback Period</div><div class="value amber">${payback} years</div></div>
+    </div>`;
+}
+
+function renderPL() {
+  document.getElementById('pl-content').innerHTML = buildPL();
+}
+
+// ===== NAVIGATION =====
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const page = document.getElementById('page-' + id);
+  if (page) page.classList.add('active');
+  const navItems = document.querySelectorAll('.nav-item');
+  navItems.forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes(id)) n.classList.add('active');
+  });
+
+  // Render dynamic pages
+  if (id === 'demand-projection') {
+    document.getElementById('dp-content').innerHTML = buildDemandProjection() || '<div class="alert alert-warn">No demand mapping data. Please add entries in Demand Mapping first.</div>';
+  }
+  if (id === 'capital-cost') renderCapitalCost();
+  if (id === 'max-demand') {
+    document.getElementById('md-content').innerHTML = buildMaxDemand() || '<div class="alert alert-warn">No demand mapping data.</div>';
+  }
+  if (id === 'pl-payback') renderPL();
+}
+
+// ===== UTIL =====
+function fmt(n) {
+  if (n === undefined || n === null || isNaN(n)) return '-';
+  return Math.round(n).toLocaleString('en-IN');
+}
+
+// Start
+init();
+</script>
+</body>
+</html>
